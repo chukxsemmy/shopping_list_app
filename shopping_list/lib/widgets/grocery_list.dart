@@ -72,10 +72,31 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryitems.indexOf(item);
     setState(() {
       _groceryitems.remove(item);
     });
+    final url = Uri.https('flutter-prep-afb82-default-rtdb.firebaseio.com',
+        'shoping-list/${item.id}.json');
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      //todo: add undo response
+      // Get.snackbar(
+      //   'Undo',
+      //   'Item not deleted',
+      //   backgroundColor: const Color.fromARGB(255, 34, 21, 99),
+      //   colorText: Colors.white,
+      //   icon: const Icon(
+      //     Icons.notifications,
+      //     color: Colors.white,
+      //   ),
+      // );
+      setState(() {
+        _groceryitems.insert(index, item);
+      });
+    }
   }
 
   @override
