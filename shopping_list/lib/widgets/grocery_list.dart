@@ -29,39 +29,46 @@ class _GroceryListState extends State<GroceryList> {
   void _loadItem() async {
     final url = Uri.https(
         'flutter-prep-afb82-default-rtdb.firebaseio.com', 'shoping-list.json');
-    final response = await http.get(url);
-    if (response.statusCode >= 400) {
-      setState(() {
-        _error = 'Failed to fetch data. Please try again later.';
-      });
-    }
+    try {
+      final response = await http.get(url);
 
-    if (response.body == 'null') {
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Failed to fetch data. Please try again later.';
+        });
+      }
+
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> loadedItems = [];
+      for (final items in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+                (catItem) => catItem.value.title == items.value['category'])
+            .value;
+        loadedItems.add(
+          GroceryItem(
+            id: items.key,
+            name: items.value['name'],
+            quantity: items.value['quantity'],
+            category: category,
+          ),
+        );
+      }
       setState(() {
+        _groceryitems = loadedItems;
         _isLoading = false;
       });
-      return;
+    } catch (err) {
+      setState(() {
+        _error = 'Something went wrong. Please try again later.';
+      });
     }
-    final Map<String, dynamic> listData = json.decode(response.body);
-    final List<GroceryItem> loadedItems = [];
-    for (final items in listData.entries) {
-      final category = categories.entries
-          .firstWhere(
-              (catItem) => catItem.value.title == items.value['category'])
-          .value;
-      loadedItems.add(
-        GroceryItem(
-          id: items.key,
-          name: items.value['name'],
-          quantity: items.value['quantity'],
-          category: category,
-        ),
-      );
-    }
-    setState(() {
-      _groceryitems = loadedItems;
-      _isLoading = false;
-    });
   }
 
   void _addItem() async {
